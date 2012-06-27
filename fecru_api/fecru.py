@@ -97,6 +97,10 @@ class Repository(object):
     def enabled(self):
         return self._data.get('enabled')
 
+    @property
+    def location(self):
+        return self._data.get('localtion')
+
     @staticmethod
     def from_xml(et):
         self = Repository()
