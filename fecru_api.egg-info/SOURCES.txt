@@ -1,0 +1,9 @@
+setup.cfg
+setup.py
+fecru_api/__init__.py
+fecru_api.egg-info/PKG-INFO
+fecru_api.egg-info/SOURCES.txt
+fecru_api.egg-info/dependency_links.txt
+fecru_api.egg-info/entry_points.txt
+fecru_api.egg-info/top_level.txt
+fecru_api.egg-info/zip-safe
