@@ -17,7 +17,7 @@ setup(name='fecru_api',
       packages=find_packages(exclude=['ez_setup', 'examples', 'tests']),
       include_package_data=True,
       zip_safe=True,
-      install_requires=[
+      install_requires=["simplejson",
           # -*- Extra requirements: -*-
       ],
       entry_points="""
