@@ -99,7 +99,7 @@ class Repository(object):
 
     @property
     def location(self):
-        return self._data.get('localtion')
+        return self._data.get('location')
 
     @staticmethod
     def from_xml(et):
