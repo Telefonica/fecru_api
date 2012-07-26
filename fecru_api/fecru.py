@@ -170,7 +170,7 @@ class Changeset(object):
 
     @property
     def branch(self):
-        return self._data.get('branches')
+        return self._data.get('branch')
 
     @property
     def children(self):
@@ -202,6 +202,7 @@ class Changeset(object):
             self._data['tags'] = []
             self._data['filerev'] = {}
             self._data['author'] = ""
+            self._data['branch'] = ""
             for (attr, value) in et.attrib.items():
                 self._data[attr] = value
             
