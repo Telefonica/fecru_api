@@ -19,6 +19,22 @@ class RequestError(Exception):
     def __str__(self):
         return "%s : %s" % (self.retcode, self.errors)
 
+class fecruobject(object):
+
+    def __init__(self):
+        self._data = {}
+
+    def _get_boolean(self, name):
+        data = self._data.get(name)
+        if data is not None:
+            if data.lower() == "true":
+                data = True
+            elif data.lower() == "false":
+                data = False
+        return data
+
+
+
 class FeCruServer(object):
     """ Server Fisheye & Crucible """
 
@@ -75,11 +91,7 @@ class FeCruServer(object):
         data = ["%s:\t%s" % (attr, val) for (attr, val) in self._data.items()]
         return "[FeCruServer]\n\t" + "\n\t".join(data) + "\n[FeCruServer]" 
 
-class Repository(object):
-
-    def __init__(self):
-        self._data = {}
-        pass
+class Repository(fecruobject):
 
     @property
     def state(self):
@@ -91,12 +103,12 @@ class Repository(object):
 
     @property
     def finished_full_slurp(self):
-        return self._data.get('finishedFullSlurp')
+        return self._get_boolean('finishedFullSlurp')
 
     @property 
     def enabled(self):
-        return self._data.get('enabled')
-
+        return self._get_boolean('enabled')
+        
     @property
     def location(self):
         return self._data.get('location')
@@ -172,6 +184,10 @@ class Changeset(object):
     def tag(self):
         return self._data.get('tags')
 
+    @property
+    def author(self):
+        return self._data.get('author')
+
     @staticmethod
     def from_xml(et):
         self = Changeset()
@@ -185,6 +201,7 @@ class Changeset(object):
             self._data['parents'] = []
             self._data['tags'] = []
             self._data['filerev'] = {}
+            self._data['author'] = ""
             for (attr, value) in et.attrib.items():
                 self._data[attr] = value
             
