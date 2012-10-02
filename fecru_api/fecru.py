@@ -388,7 +388,7 @@ class API(object):
             size=changesets)
 
         branches = set()
-        for revision in request.iter('revision'):
+        for revision in request.getiterator('revision'):
             branches.add(revision.attrib['branch'])
 
         return list(branches)
