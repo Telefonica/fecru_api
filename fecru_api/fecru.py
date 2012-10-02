@@ -5,7 +5,6 @@ import urllib
 from collections import defaultdict
 from xml.etree import ElementTree
 
-from ipdb import set_trace;
 class RequestError(Exception):
     """ 
     Exception used by the API 
@@ -367,7 +366,6 @@ class API(object):
             "/rest-service-fe/revisionData-v1/changeset/%s/%s" % (repo_name, changeset_id))
         return Changeset.from_xml(request)
 
-
     def get_path_list(self, repo_name, path=None):
         request = self.server._request_get(
             "/rest-service-fe/revisionData-v1/pathList/%s" % ( repo_name), path=path)
@@ -380,6 +378,20 @@ class API(object):
         request = self.server._request_get(
             "/rest-service-fe/revisionData-v1/revisionInfo/%s" % repo_name, path=path, revision=revision)
         return RevisionInfo.from_xml(request)
+
+    def get_repository_branches(self, repository, changesets=50):
+        """
+        Get the repository branches found in the latest given changesets
+        """
+        request = self.server._request_get(
+            "/rest-service-fe/commit-graph-v1/slice/%s" % repository,
+            size=changesets)
+
+        branches = []
+        for revision in request.iter('revision'):
+            branches.append(revision.attrib['branch'])
+
+        return branches
 
 class Server(object):
     def __init__(self, url, user, password):
