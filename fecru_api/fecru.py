@@ -4,6 +4,7 @@ import simplejson as json
 import urllib
 from collections import defaultdict
 from xml.etree import ElementTree
+from sets import Set
 
 class RequestError(Exception):
     """ 
@@ -387,11 +388,11 @@ class API(object):
             "/rest-service-fe/commit-graph-v1/slice/%s" % repository,
             size=changesets)
 
-        branches = []
+        branches = Set()
         for revision in request.iter('revision'):
-            branches.append(revision.attrib['branch'])
+            branches.add(revision.attrib['branch'])
 
-        return branches
+        return list(branches)
 
 class Server(object):
     def __init__(self, url, user, password):
