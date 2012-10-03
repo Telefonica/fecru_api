@@ -379,7 +379,7 @@ class API(object):
             "/rest-service-fe/revisionData-v1/revisionInfo/%s" % repo_name, path=path, revision=revision)
         return RevisionInfo.from_xml(request)
 
-    def get_repository_branches(self, repository, changesets=50):
+    def get_repository_branches(self, repository, changesets=500):
         """
         Get the repository branches found in the latest given changesets
         """
@@ -393,10 +393,26 @@ class API(object):
 
         return list(branches)
 
+    def get_changesets_from_branch(self, repository, branch, count=5):
+        """
+        Get the changesets branch list
+        @return a list of Changeset objects
+        """
+        request = self.server._request_get(
+            "/rest-service-fe/commit-graph-v1/slice/%s" % repository,
+            size=count,
+            branch=branch)
+
+        changeset_list = []
+        for revision in request.getiterator('revision'):
+            changeset = revision.attrib['csid'][:12]
+            changeset_list.append(self.get_changeset(repository, changeset))
+        return changeset_list
+
+
 class Server(object):
     def __init__(self, url, user, password):
         self.api = API(self)
-        print "Server: %s" % url
         password_mgr = urllib2.HTTPPasswordMgrWithDefaultRealm()
         password_mgr.add_password(None, url, user, password)
         auth_handler = urllib2.HTTPBasicAuthHandler(password_mgr)
