@@ -1,6 +1,7 @@
 import urllib2
 import base64
 import simplejson as json
+from simplejson import JSONDecodeError
 import urllib
 from collections import defaultdict
 from xml.etree import ElementTree
@@ -446,7 +447,6 @@ class Server(object):
         qs = urllib.urlencode(kwargs)
         request = urllib2.Request(self.url + url + "?" +qs , self.__encode_json(data), self.headers)
         try:
-            
             channel = self.opener.open(request)
             result = channel.read()
             if result:
@@ -458,8 +458,11 @@ class Server(object):
                 code = 'HTTP %d' % response.code)
         
     def __decode_json_error(self, json_text):
-        json_decoded = json.loads(json_text)
-        return "[%s] %s" % (json_decoded.get('code'), json_decoded.get('message'))
+        try:
+            json_decoded = json.loads(json_text)
+            return "[%s] %s" % (json_decoded.get('code'), json_decoded.get('message'))
+        except JSONDecodeError:
+            return "json_loads error: could not be decoded"
 
 
 if __name__ == "__main__":
