@@ -12,10 +12,10 @@ class RequestError(Exception):
     """
     
     def __init__(self, errors, code='UNK.'):
-
-        Exception.__init__(self)
         self.errors =  errors
         self.retcode = code
+        super(RequestError, self).__init__(errors, code)
+
     def __str__(self):
         return "%s : %s" % (self.retcode, self.errors)
 
