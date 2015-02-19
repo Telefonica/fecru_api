@@ -417,6 +417,7 @@ class API(object):
         params['description'] = description
         params['storeDiff'] = True
         params['enabled'] = True
+        params[type] = {}
         params[type]['location'] = location
         params[type]['path'] = ''
         params[type]['auth']['authType'] = 'none'
