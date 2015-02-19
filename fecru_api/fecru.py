@@ -432,14 +432,6 @@ class API(object):
             '/rest-service-fecru/admin/repositories',
             params
         )
-        # codes from
-        # https://docs.atlassian.com/fisheye-crucible/latest/wadl/fecru.html#rest-service-fecru:admin:repositories
-        if request.code == 201:
-            self.logger.info('Repo %s created in fisheye' % name)
-        else:
-            self.logger.warning('Request to create a new repo in fisheye failed')
-
-
 
 class Server(object):
     def __init__(self, url, user, password):
@@ -475,7 +467,7 @@ class Server(object):
 
     def _request_post(self, url, data, **kwargs):
         qs = urllib.urlencode(kwargs)
-        params = urllib.urlencode(data)
+        params = json.dumps(data)
         request = urllib2.Request(self.url + url + "?" +qs , params, self.headers)
         try:
             channel = self.opener.open(request)
