@@ -475,7 +475,8 @@ class Server(object):
 
     def _request_post(self, url, data, **kwargs):
         qs = urllib.urlencode(kwargs)
-        request = urllib2.Request(self.url + url + "?" +qs , self.__encode_json(data), self.headers)
+        params = urllib.urlencode(data)
+        request = urllib2.Request(self.url + url + "?" +qs , params, self.headers)
         try:
             channel = self.opener.open(request)
             result = channel.read()
@@ -486,7 +487,13 @@ class Server(object):
             raise RequestError(
                     response.read(), 
                 code = 'HTTP %d' % response.code)
-        
+
+    def __decode_json(self, json_text):
+        try:
+            return json.loads(json_text)
+        except JSONDecodeError:
+            return "json_loads error: could not be decoded"
+
     def __decode_json_error(self, json_text):
         try:
             json_decoded = json.loads(json_text)
