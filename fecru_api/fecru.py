@@ -410,6 +410,34 @@ class API(object):
             changeset_list.append(self.get_changeset(repository, changeset))
         return changeset_list
 
+    def _get_params_repo(self, type, name, location, description):
+        params = {}
+        params['type'] = type
+        params['name'] = name
+        params['description'] = description
+        params['storeDiff'] = True
+        params['enabled'] = True
+        params[type]['location'] = location
+        params[type]['path'] = ''
+        params[type]['auth']['authType'] = 'none'
+        if type == 'git':
+            params[type]['renameDetection'] = 'none'
+        return params
+
+    def create_repo(self, type, name, location, description):
+        params = self._get_params_repo(type, name, location, description)
+        request = self.server._request_post(
+            '/rest-service-fecru/admin/repositories',
+            params
+        )
+        # codes from
+        # https://docs.atlassian.com/fisheye-crucible/latest/wadl/fecru.html#rest-service-fecru:admin:repositories
+        if request.code == 201:
+            self.logger.info('Repo %s created in fisheye' % name)
+        else:
+            self.logger.warning('Request to create a new repo in fisheye failed')
+
+
 
 class Server(object):
     def __init__(self, url, user, password):
