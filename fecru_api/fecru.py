@@ -420,6 +420,7 @@ class API(object):
         params[type] = {}
         params[type]['location'] = location
         params[type]['path'] = ''
+        params[type]['auth'] = {}
         params[type]['auth']['authType'] = 'none'
         if type == 'git':
             params[type]['renameDetection'] = 'none'
