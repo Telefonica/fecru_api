@@ -478,11 +478,11 @@ class Server(object):
             result = channel.read()
             if result:
                 return self.__decode_json(result)
-
-        except urllib2.HTTPError as response:
+        except (urllib2.HTTPError, urllib2.URLError) as response:
             raise RequestError(
-                    response.read(), 
-                code = 'HTTP %d' % response.code)
+                response.read(),
+                code = 'HTTP %d' % response.code
+            )
         except (TypeError, ValueError) as err:
             return "json_dumps error: %s" % str(err)
 
