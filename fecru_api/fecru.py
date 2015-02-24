@@ -1,7 +1,7 @@
 import urllib2
 import base64
 import simplejson as json
-from simplejson import JSONDecodeError
+from simplejson import JSONDecodeError, JSONEncoder
 import urllib
 from collections import defaultdict
 from xml.etree import ElementTree
@@ -466,10 +466,14 @@ class Server(object):
         return ElementTree.fromstring(result)
 
     def _request_post(self, url, data, **kwargs):
-        qs = urllib.urlencode(kwargs)
-        params = json.dumps(data)
-        request = urllib2.Request(self.url + url + "?" +qs , params, self.headers)
         try:
+            qs = urllib.urlencode(kwargs)
+            params = json.dumps(data)
+            request = urllib2.Request(
+                self.url + url + "?" +qs,
+                params,
+                self.headers
+            )
             channel = self.opener.open(request)
             result = channel.read()
             if result:
@@ -479,6 +483,8 @@ class Server(object):
             raise RequestError(
                     response.read(), 
                 code = 'HTTP %d' % response.code)
+        except (TypeError, ValueError) as err:
+            return "json_dumps error: %s" % str(err)
 
     def __decode_json(self, json_text):
         try:
