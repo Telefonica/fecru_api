@@ -433,7 +433,7 @@ class API(object):
             params
         )
     def enable_repo(self, name):
-        request = self.server._request_post(
+        request = self.server._request_put(
             '/rest-service-fecru/admin/repositories/%s' % name,
             {'enabled': True}
         )
@@ -479,6 +479,28 @@ class Server(object):
                 params,
                 self.headers
             )
+            channel = self.opener.open(request)
+            result = channel.read()
+            if result:
+                return self.__decode_json(result)
+        except (urllib2.HTTPError, urllib2.URLError) as response:
+            raise RequestError(
+                response.read(),
+                code = 'HTTP %d' % response.code
+            )
+        except (TypeError, ValueError) as err:
+            return "json_dumps error: %s" % str(err)
+
+    def _request_put(self, url, data, **kwargs):
+        try:
+            qs = urllib.urlencode(kwargs)
+            params = json.dumps(data)
+            request = urllib2.Request(
+                self.url + url + "?" +qs,
+                params,
+                self.headers
+            )
+            request.get_method = lambda: 'PUT'
             channel = self.opener.open(request)
             result = channel.read()
             if result:
