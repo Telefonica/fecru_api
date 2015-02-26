@@ -437,6 +437,16 @@ class API(object):
             '/rest-service-fecru/admin/repositories/%s' % name,
             {'enabled': True}
         )
+    def start_repo(self, name):
+        request = self.server._request_put(
+            '/rest-service-fecru/admin/repositories/%s/stop' % name,
+            {}
+        )
+    def stop_repo(self, name):
+        request = self.server._request_put(
+            '/rest-service-fecru/admin/repositories/%s/stop' % name,
+            {}
+        )
 
 class Server(object):
     def __init__(self, url, user, password):
