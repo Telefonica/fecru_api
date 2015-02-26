@@ -439,7 +439,7 @@ class API(object):
         )
     def start_repo(self, name):
         request = self.server._request_put(
-            '/rest-service-fecru/admin/repositories/%s/stop' % name,
+            '/rest-service-fecru/admin/repositories/%s/start' % name,
             {}
         )
     def stop_repo(self, name):
