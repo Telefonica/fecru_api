@@ -432,6 +432,11 @@ class API(object):
             '/rest-service-fecru/admin/repositories',
             params
         )
+    def enable_repo(self, name):
+        request = self.server._request_post(
+            '/rest-service-fecru/admin/repositories/%s' % name,
+            {'enabled': True}
+        )
 
 class Server(object):
     def __init__(self, url, user, password):
