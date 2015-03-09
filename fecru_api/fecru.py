@@ -428,22 +428,22 @@ class API(object):
 
     def create_repo(self, type, name, location, description):
         params = self._get_params_repo(type, name, location, description)
-        request = self.server._request_post(
+        self.server._request_post(
             '/rest-service-fecru/admin/repositories',
             params
         )
     def enable_repo(self, name):
-        request = self.server._request_put(
+        self.server._request_put(
             '/rest-service-fecru/admin/repositories/%s' % name,
             {'enabled': True}
         )
     def start_repo(self, name):
-        request = self.server._request_put(
+        self.server._request_put(
             '/rest-service-fecru/admin/repositories/%s/start' % name,
             {}
         )
     def stop_repo(self, name):
-        request = self.server._request_put(
+        self.server._request_put(
             '/rest-service-fecru/admin/repositories/%s/stop' % name,
             {}
         )
