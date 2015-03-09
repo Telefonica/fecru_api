@@ -1,7 +1,7 @@
 import urllib2
 import base64
 import simplejson as json
-from simplejson import JSONDecodeError
+from simplejson import JSONDecodeError, JSONEncoder
 import urllib
 from collections import defaultdict
 from xml.etree import ElementTree
@@ -410,6 +410,43 @@ class API(object):
             changeset_list.append(self.get_changeset(repository, changeset))
         return changeset_list
 
+    def _get_params_repo(self, type, name, location, description):
+        params = {}
+        params['type'] = type
+        params['name'] = name
+        params['description'] = description
+        params['storeDiff'] = True
+        params['enabled'] = True
+        params[type] = {}
+        params[type]['location'] = location
+        params[type]['path'] = ''
+        params[type]['auth'] = {}
+        params[type]['auth']['authType'] = 'none'
+        if type == 'git':
+            params[type]['renameDetection'] = 'none'
+        return params
+
+    def create_repo(self, type, name, location, description):
+        params = self._get_params_repo(type, name, location, description)
+        self.server._request_post(
+            '/rest-service-fecru/admin/repositories',
+            params
+        )
+    def enable_repo(self, name):
+        self.server._request_put(
+            '/rest-service-fecru/admin/repositories/%s' % name,
+            {'enabled': True}
+        )
+    def start_repo(self, name):
+        self.server._request_put(
+            '/rest-service-fecru/admin/repositories/%s/start' % name,
+            {}
+        )
+    def stop_repo(self, name):
+        self.server._request_put(
+            '/rest-service-fecru/admin/repositories/%s/stop' % name,
+            {}
+        )
 
 class Server(object):
     def __init__(self, url, user, password):
@@ -444,19 +481,54 @@ class Server(object):
         return ElementTree.fromstring(result)
 
     def _request_post(self, url, data, **kwargs):
-        qs = urllib.urlencode(kwargs)
-        request = urllib2.Request(self.url + url + "?" +qs , self.__encode_json(data), self.headers)
         try:
+            qs = urllib.urlencode(kwargs)
+            params = json.dumps(data)
+            request = urllib2.Request(
+                self.url + url + "?" +qs,
+                params,
+                self.headers
+            )
             channel = self.opener.open(request)
             result = channel.read()
             if result:
                 return self.__decode_json(result)
-
-        except urllib2.HTTPError as response:
+        except (urllib2.HTTPError, urllib2.URLError) as response:
             raise RequestError(
-                    response.read(), 
-                code = 'HTTP %d' % response.code)
-        
+                response.read(),
+                code = 'HTTP %d' % response.code
+            )
+        except (TypeError, ValueError) as err:
+            return "json_dumps error: %s" % str(err)
+
+    def _request_put(self, url, data, **kwargs):
+        try:
+            qs = urllib.urlencode(kwargs)
+            params = json.dumps(data)
+            request = urllib2.Request(
+                self.url + url + "?" +qs,
+                params,
+                self.headers
+            )
+            request.get_method = lambda: 'PUT'
+            channel = self.opener.open(request)
+            result = channel.read()
+            if result:
+                return self.__decode_json(result)
+        except (urllib2.HTTPError, urllib2.URLError) as response:
+            raise RequestError(
+                response.read(),
+                code = 'HTTP %d' % response.code
+            )
+        except (TypeError, ValueError) as err:
+            return "json_dumps error: %s" % str(err)
+
+    def __decode_json(self, json_text):
+        try:
+            return json.loads(json_text)
+        except JSONDecodeError:
+            return "json_loads error: could not be decoded"
+
     def __decode_json_error(self, json_text):
         try:
             json_decoded = json.loads(json_text)
