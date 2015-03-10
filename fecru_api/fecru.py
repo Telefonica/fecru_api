@@ -419,11 +419,11 @@ class API(object):
         params['enabled'] = True
         params[type] = {}
         params[type]['location'] = location
-        params[type]['path'] = ''
         params[type]['auth'] = {}
         params[type]['auth']['authType'] = 'none'
         if type == 'git':
             params[type]['renameDetection'] = 'none'
+            params[type]['path'] = ''
         return params
 
     def create_repo(self, type, name, location, description):
