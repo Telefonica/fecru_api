@@ -1,10 +1,9 @@
-import urllib2
 import base64
+import urllib
 import simplejson as json
 from simplejson import JSONDecodeError, JSONEncoder
-import urllib
-from collections import defaultdict
 from xml.etree import ElementTree
+
 
 class RequestError(Exception):
     """ 
@@ -19,6 +18,7 @@ class RequestError(Exception):
     def __str__(self):
         return "%s : %s" % (self.retcode, self.errors)
 
+
 class fecruobject(object):
 
     def __init__(self):
@@ -32,7 +32,6 @@ class fecruobject(object):
             elif data.lower() == "false":
                 data = False
         return data
-
 
 
 class FeCruServer(object):
@@ -451,12 +450,13 @@ class API(object):
 class Server(object):
     def __init__(self, url, user, password):
         self.api = API(self)
-        password_mgr = urllib2.HTTPPasswordMgrWithDefaultRealm()
+        password_mgr = urllib.request.HTTPPasswordMgrWithDefaultRealm()
         password_mgr.add_password(None, url, user, password)
-        auth_handler = urllib2.HTTPBasicAuthHandler(password_mgr)
+        auth_handler = urllib.request.HTTPBasicAuthHandler(password_mgr)
 
-        self.opener = urllib2.build_opener(auth_handler, urllib2.HTTPHandler(debuglevel=0))
-        base64string = base64.encodestring('%s:%s' % (user, password)).replace('\n', '')
+        self.opener = urllib.request.build_opener(auth_handler, urllib.request.HTTPHandler(debuglevel=0))
+        auth_string = ('%s:%s' % (user, password)).encode('ascii')
+        base64string = base64.encodestring(auth_string)
         self.headers = {"Content-Type": "application/json", 
                         "Authorization": "Basic %s" % base64string}
         self.url = url
@@ -467,11 +467,11 @@ class Server(object):
         for k,v in kwargs.items():
             if not v:
                 del args[k]
-        qs = urllib.urlencode(kwargs)
-        request = urllib2.Request(self.url + url + "?" + qs, None, self.headers)
+        qs = urllib.parse.urlencode(kwargs)
+        request = urllib.request.Request(self.url + url + "?" + qs, None, self.headers)
         try:
             channel = self.opener.open(request)
-        except urllib2.HTTPError as response:
+        except urllib.request.HTTPError as response:
             raise RequestError(
                 self.__decode_json_error(response.read()),
                 code = 'HTTP %d' % response.code)
@@ -482,9 +482,9 @@ class Server(object):
 
     def _request_post(self, url, data, **kwargs):
         try:
-            qs = urllib.urlencode(kwargs)
+            qs = urllib.parse.urlencode(kwargs)
             params = json.dumps(data)
-            request = urllib2.Request(
+            request = urllib.request.Request(
                 self.url + url + "?" +qs,
                 params,
                 self.headers
@@ -493,7 +493,7 @@ class Server(object):
             result = channel.read()
             if result:
                 return self.__decode_json(result)
-        except (urllib2.HTTPError, urllib2.URLError) as response:
+        except (urllib.request.HTTPError, urllib.request.URLError) as response:
             raise RequestError(
                 response.read(),
                 code = 'HTTP %d' % response.code
@@ -503,9 +503,9 @@ class Server(object):
 
     def _request_put(self, url, data, **kwargs):
         try:
-            qs = urllib.urlencode(kwargs)
+            qs = urllib.parse.urlencode(kwargs)
             params = json.dumps(data)
-            request = urllib2.Request(
+            request = urllib.request.Request(
                 self.url + url + "?" +qs,
                 params,
                 self.headers
@@ -515,7 +515,7 @@ class Server(object):
             result = channel.read()
             if result:
                 return self.__decode_json(result)
-        except (urllib2.HTTPError, urllib2.URLError) as response:
+        except (urllib.request.HTTPError, urllib.request.URLError) as response:
             raise RequestError(
                 response.read(),
                 code = 'HTTP %d' % response.code
@@ -536,35 +536,3 @@ class Server(object):
         except JSONDecodeError:
             return "json_loads error: could not be decoded"
 
-
-if __name__ == "__main__":
-    s = Server("http://localhost:3990/fecru", "admin", "admin")
-    api = s.api
-
-    print "*** SERVER ***"
-    print api.get_server()
-    print "*** REPOS ***"
-    print api.get_repos()
-    for rep in api.get_repos():
-        print "*** REPO DETAIL ***"
-        print api.get_repo(rep.name)
-        print "*** CHANGES ****"
-        for change in api.get_changeset_list(rep.name, maxReturn=1):
-            print change
-            print "*** CHANGE DETAIL ***"
-            cset = api.get_changeset(rep.name, change.csid) 
-            print cset
-            try:
-                print "*** REVISION INFO ***"
-                print api.get_revision_info(rep.name, revision=change.csid, path='/')
-            except RequestError as e:
-                print  e
-        
-        print "*** PATHS ***"
-        try:
-            for path in api.get_path_list(rep.name, path='/'):
-                print path
-        except RequestError as e:
-            print e
-        
-    
