@@ -486,7 +486,7 @@ class Server(object):
             params = json.dumps(data)
             request = urllib.request.Request(
                 self.url + url + "?" +qs,
-                params,
+                params.encode("utf-8"),
                 self.headers
             )
             channel = self.opener.open(request)
@@ -507,7 +507,7 @@ class Server(object):
             params = json.dumps(data)
             request = urllib.request.Request(
                 self.url + url + "?" +qs,
-                params,
+                params.encode("utf-8"),
                 self.headers
             )
             request.get_method = lambda: 'PUT'
