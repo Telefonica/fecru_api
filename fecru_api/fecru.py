@@ -1,5 +1,6 @@
-import base64
-import urllib
+from __future__ import unicode_literals
+import requests
+from requests.auth import HTTPBasicAuth
 import simplejson as json
 from simplejson import JSONDecodeError, JSONEncoder
 from xml.etree import ElementTree
@@ -450,15 +451,9 @@ class API(object):
 class Server(object):
     def __init__(self, url, user, password):
         self.api = API(self)
-        password_mgr = urllib.request.HTTPPasswordMgrWithDefaultRealm()
-        password_mgr.add_password(None, url, user, password)
-        auth_handler = urllib.request.HTTPBasicAuthHandler(password_mgr)
+        self.auth_handler = HTTPBasicAuth(user, password)
 
-        self.opener = urllib.request.build_opener(auth_handler, urllib.request.HTTPHandler(debuglevel=0))
-        auth_string = ('%s:%s' % (user, password)).encode('ascii')
-        base64string = base64.encodestring(auth_string)
-        self.headers = {"Content-Type": "application/json", 
-                        "Authorization": "Basic %s" % base64string}
+        self.headers = {"Content-Type": "application/json"}
         self.url = url
 
     def _request_get(self, url, **kwargs):
@@ -467,58 +462,42 @@ class Server(object):
         for k,v in kwargs.items():
             if not v:
                 del args[k]
-        qs = urllib.parse.urlencode(kwargs)
-        request = urllib.request.Request(self.url + url + "?" + qs, None, self.headers)
-        try:
-            channel = self.opener.open(request)
-        except urllib.request.HTTPError as response:
-            raise RequestError(
-                self.__decode_json_error(response.read()),
-                code = 'HTTP %d' % response.code)
-            
-        result = channel.read()
-        #print result
-        return ElementTree.fromstring(result)
+        result = requests.get(self.url + url,
+                               params=kwargs,
+                               headers=self.headers,
+                               auth=self.auth_handler)
+        return ElementTree.fromstring(result.text)
 
     def _request_post(self, url, data, **kwargs):
         try:
-            qs = urllib.parse.urlencode(kwargs)
-            params = json.dumps(data)
-            request = urllib.request.Request(
-                self.url + url + "?" +qs,
-                params.encode("utf-8"),
-                self.headers
-            )
-            channel = self.opener.open(request)
-            result = channel.read()
+            result = requests.post(self.url + url,
+                               params=kwargs,
+                               data=json.dumps(data),
+                               headers=self.headers,
+                               auth=self.auth_handler)
             if result:
-                return self.__decode_json(result)
-        except (urllib.request.HTTPError, urllib.request.URLError) as response:
+                return result.json()
+        except requests.exceptions.HTTPError as e:
             raise RequestError(
-                response.read(),
-                code = 'HTTP %d' % response.code
+                result.text,
+                code = 'HTTP %d' % result.status_code
             )
         except (TypeError, ValueError) as err:
             return "json_dumps error: %s" % str(err)
 
     def _request_put(self, url, data, **kwargs):
         try:
-            qs = urllib.parse.urlencode(kwargs)
-            params = json.dumps(data)
-            request = urllib.request.Request(
-                self.url + url + "?" +qs,
-                params.encode("utf-8"),
-                self.headers
-            )
-            request.get_method = lambda: 'PUT'
-            channel = self.opener.open(request)
-            result = channel.read()
+            result = requests.put(self.url + url,
+                                  params=kwargs,
+                                  data=data,
+                                  headers=self.headers,
+                                  auth=self.auth_handler)
             if result:
-                return self.__decode_json(result)
-        except (urllib.request.HTTPError, urllib.request.URLError) as response:
+                return result.json()
+        except requests.exceptions.HTTPError as e:
             raise RequestError(
-                response.read(),
-                code = 'HTTP %d' % response.code
+                result.text,
+                code = 'HTTP %d' % result.status_code
             )
         except (TypeError, ValueError) as err:
             return "json_dumps error: %s" % str(err)
