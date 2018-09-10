@@ -221,7 +221,7 @@ class Changeset(object):
                 
             for filerev in et.findall('fileRevisionKey'):
                 self._data['filerev'][filerev.get('path')] = filerev.get('rev')
-        return self
+        return self if self._data else None
 
     def __str__(self):
         data = ["%s:%s" % (attr, repr(val)) 
