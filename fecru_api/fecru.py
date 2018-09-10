@@ -465,6 +465,7 @@ class Server(object):
                                params=kwargs,
                                headers=self.headers,
                                auth=self.auth_handler)
+        result.encoding = 'utf-8'
         return ElementTree.fromstring(result.text)
 
     def _request_post(self, url, data, **kwargs):
