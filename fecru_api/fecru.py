@@ -1,4 +1,3 @@
-from __future__ import unicode_literals
 import requests
 from requests.auth import HTTPBasicAuth
 import simplejson as json
@@ -209,7 +208,7 @@ class Changeset(object):
             for child in et.findall('children/child'):
                 self._data['children'].append(child.text)
 
-            self._data['comment'] = unicode(et.findtext('comment'))
+            self._data['comment'] = str(et.findtext('comment'))
             
             for parent in et.findall('parent'):
                 self._data['parents'].append(parent.text)
