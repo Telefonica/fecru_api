@@ -1,4 +1,5 @@
 import requests
+from requests import ConnectionError
 from requests.auth import HTTPBasicAuth
 import simplejson as json
 from simplejson import JSONDecodeError, JSONEncoder
@@ -357,8 +358,9 @@ class API(object):
             maxReturn=maxReturn)
 
         result = []
-        for change in request.getchildren():
-            result.append(Changeset.from_xml(change))
+        if request: 
+            for change in request.getchildren():
+                result.append(Changeset.from_xml(change))
         return result
 
     def get_changeset(self, repo_name, changeset_id):
@@ -436,18 +438,22 @@ class API(object):
             '/rest-service-fecru/admin/repositories/%s' % name,
             {'enabled': True}
         )
+
     def start_repo(self, name):
         self.server._request_put(
             '/rest-service-fecru/admin/repositories/%s/start' % name,
             {}
         )
+
     def stop_repo(self, name):
         self.server._request_put(
             '/rest-service-fecru/admin/repositories/%s/stop' % name,
             {}
         )
 
+
 class Server(object):
+
     def __init__(self, url, user, password):
         self.api = API(self)
         self.auth_handler = HTTPBasicAuth(user, password)
@@ -457,30 +463,35 @@ class Server(object):
 
     def _request_get(self, url, **kwargs):
         # Filter out empty args
-        args = kwargs
-        for k,v in kwargs.items():
+        args = kwargs.copy()
+        for k, v in kwargs.items():
             if not v:
                 del args[k]
-        result = requests.get(self.url + url,
-                               params=kwargs,
-                               headers=self.headers,
-                               auth=self.auth_handler)
+
+        try:
+            result = requests.get(self.url + url,
+                                  params=args,
+                                  headers=self.headers,
+                                  auth=self.auth_handler)
+        except ConnectionError:
+            return None
+
         result.encoding = 'utf-8'
         return ElementTree.fromstring(result.text)
 
     def _request_post(self, url, data, **kwargs):
         try:
             result = requests.post(self.url + url,
-                               params=kwargs,
-                               data=json.dumps(data),
-                               headers=self.headers,
-                               auth=self.auth_handler)
+                                   params=kwargs,
+                                   data=json.dumps(data),
+                                   headers=self.headers,
+                                   auth=self.auth_handler)
             if result:
                 return result.json()
         except requests.exceptions.HTTPError as e:
             raise RequestError(
                 result.text,
-                code = 'HTTP %d' % result.status_code
+                code='HTTP %d' % result.status_code
             )
         except (TypeError, ValueError) as err:
             return "json_dumps error: %s" % str(err)
@@ -497,7 +508,7 @@ class Server(object):
         except requests.exceptions.HTTPError as e:
             raise RequestError(
                 result.text,
-                code = 'HTTP %d' % result.status_code
+                code='HTTP %d' % result.status_code
             )
         except (TypeError, ValueError) as err:
             return "json_dumps error: %s" % str(err)
