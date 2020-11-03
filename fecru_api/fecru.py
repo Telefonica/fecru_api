@@ -1,18 +1,17 @@
 import requests
-from requests import ConnectionError
 from requests.auth import HTTPBasicAuth
 import simplejson as json
-from simplejson import JSONDecodeError, JSONEncoder
+from simplejson import JSONDecodeError
 from xml.etree import ElementTree
 
 
 class RequestError(Exception):
-    """ 
-    Exception used by the API 
     """
-    
+    Exception used by the API
+    """
+
     def __init__(self, errors, code='UNK.'):
-        self.errors =  errors
+        self.errors = errors
         self.retcode = code
         super(RequestError, self).__init__(errors, code)
 
@@ -53,15 +52,15 @@ class FeCruServer(object):
     @property
     def app_home_dir(self):
         return self._data['app_home_dir']
-    
+
     @property
     def version(self):
         return self._data['version']
-    
+
     @property
     def build_date(self):
         return self._data['build_date']
-    
+
     @property
     def is_fisheye(self):
         return self._data['is_fisheye']
@@ -89,7 +88,7 @@ class FeCruServer(object):
 
     def __str__(self):
         data = ["%s:\t%s" % (attr, val) for (attr, val) in self._data.items()]
-        return "[FeCruServer]\n\t" + "\n\t".join(data) + "\n[FeCruServer]" 
+        return "[FeCruServer]\n\t" + "\n\t".join(data) + "\n[FeCruServer]"
 
 class Repository(fecruobject):
 
@@ -105,10 +104,10 @@ class Repository(fecruobject):
     def finished_full_slurp(self):
         return self._get_boolean('finishedFullSlurp')
 
-    @property 
+    @property
     def enabled(self):
         return self._get_boolean('enabled')
-        
+
     @property
     def location(self):
         return self._data.get('location')
@@ -124,7 +123,7 @@ class Repository(fecruobject):
 
     def __str__(self):
         data = ["%s:\t%s" % (attr, val) for (attr, val) in self._data.items()]
-        return "[Repository]\n\t" + "\n\t".join(data) + "\n[Repository]" 
+        return "[Repository]\n\t" + "\n\t".join(data) + "\n[Repository]"
 
 class Changeset(object):
 
@@ -205,12 +204,12 @@ class Changeset(object):
             self._data['branch'] = ""
             for (attr, value) in et.attrib.items():
                 self._data[attr] = value
-            
+
             for child in et.findall('children/child'):
                 self._data['children'].append(child.text)
 
             self._data['comment'] = str(et.findtext('comment'))
-            
+
             for parent in et.findall('parent'):
                 self._data['parents'].append(parent.text)
 
@@ -219,14 +218,14 @@ class Changeset(object):
 
             for branch in et.findall('branch'):
                 self._data['branches'].append(branch.text)
-                
+
             for filerev in et.findall('fileRevisionKey'):
                 self._data['filerev'][filerev.get('path')] = filerev.get('rev')
         return self if self._data else None
 
     def __str__(self):
-        data = ["%s:%s" % (attr, repr(val)) 
-                for (attr, val) in self._data.items() 
+        data = ["%s:%s" % (attr, repr(val))
+                for (attr, val) in self._data.items()
                 if not attr.startswith("_")]
         return u"[Changeset: %s]\n\t" % self.csid + u"\n\t".join(data) + u"\n[Changeset]"
 
@@ -251,10 +250,10 @@ class Path(object):
         for (attr, value) in et.attrib.items():
             self._data[attr] = value
         return self
-        
+
     def __str__(self):
         data = ["%s:\t%s" % (attr, val) for (attr, val) in self._data.items()]
-        return "[Path]\n\t" + "\n\t".join(data) + "\n[Path]" 
+        return "[Path]\n\t" + "\n\t".join(data) + "\n[Path]"
 
 class RevisionInfo(object):
 
@@ -313,10 +312,10 @@ class RevisionInfo(object):
         for (attr, value) in et.attrib.items():
             self._data[attr] = value
         self._data['comment'] = et.findtext('comment')
-        
+
     def __str__(self):
         data = ["%s:\t%s" % (attr, val) for (attr, val) in self._data.items()]
-        return "[RevisionInfo]\n\t" + "\n\t".join(data) + "\n[RevisionInfo]" 
+        return "[RevisionInfo]\n\t" + "\n\t".join(data) + "\n[RevisionInfo]"
 
 
 class API(object):
@@ -337,19 +336,18 @@ class API(object):
 
     def get_repos(self):
         request = self.server._request_get('/rest-service-fe/repositories-v1')
-        
         result = []
         for repo in request.getchildren():
             new_repo = Repository.from_xml(repo)
             result.append(new_repo)
         return result
-    
+
     def get_repo(self, name):
         request = self.server._request_get('/rest-service-fe/repositories-v1/%s' % name)
         new_repo = Repository.from_xml(request)
         return new_repo
-    
-    def get_changeset_list(self, repo_name, path=None, start=None, end=None, maxReturn=None):        
+
+    def get_changeset_list(self, repo_name, path=None, start=None, end=None, maxReturn=None):
         request = self.server._request_get(
             '/rest-service-fe/revisionData-v1/changesetList/%s' % repo_name,
             path=path,
@@ -358,7 +356,7 @@ class API(object):
             maxReturn=maxReturn)
 
         result = []
-        if request: 
+        if request:
             for change in request.getchildren():
                 result.append(Changeset.from_xml(change))
         return result
@@ -375,7 +373,7 @@ class API(object):
         for path in request.getchildren():
             result.append(Path.from_xml(path))
         return result
-    
+
     def get_revision_info(self, repo_name, path=None, revision=None):
         request = self.server._request_get(
             "/rest-service-fe/revisionData-v1/revisionInfo/%s" % repo_name, path=path, revision=revision)
@@ -468,16 +466,16 @@ class Server(object):
             if not v:
                 del args[k]
 
-        try:
-            result = requests.get(self.url + url,
-                                  params=args,
-                                  headers=self.headers,
-                                  auth=self.auth_handler)
-        except ConnectionError:
-            return None
+        result = requests.get(self.url + url,
+                              params=args,
+                              headers=self.headers,
+                              auth=self.auth_handler)
 
-        result.encoding = 'utf-8'
-        return ElementTree.fromstring(result.text)
+        if result.ok:
+            result.encoding = 'utf-8'
+            return ElementTree.fromstring(result.text)
+        else:
+            raise RequestError(result.text, code=result.status_code)
 
     def _request_post(self, url, data, **kwargs):
         try:
@@ -525,4 +523,3 @@ class Server(object):
             return "[%s] %s" % (json_decoded.get('code'), json_decoded.get('message'))
         except JSONDecodeError:
             return "json_loads error: could not be decoded"
-
